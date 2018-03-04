@@ -61,15 +61,15 @@ void printHexChar(char* input, uint8_t length) {
 void str_midlower(char* input, char start, char length, char* output) {
 
   uint8_t inputlen = strlen(input);
-  //Serial.print("\nLänge Input %d\n",inputlen);
+  //Serial.print("\nLÃ¤nge Input %d\n",inputlen);
   if (inputlen == 0) return;
   if (start < 0) return;
   if (start > inputlen) return;
 
   //Serial.print("\nStart Input %d:%c\n",start-1,input[start-1]);
-  //Serial.print("1. Länge %d\n",length);
+  //Serial.print("1. LÃ¤nge %d\n",length);
   if (start - 1 + length > inputlen) length = inputlen - start;
-  //Serial.print("2. Länge %d\n",length);
+  //Serial.print("2. LÃ¤nge %d\n",length);
   uint8_t a = 0;
   for (a = 0; a < length; a++) {
     output[a] = tolower(input[start - 1 + a]);
@@ -419,7 +419,7 @@ class sml
       else if (datatype < 0x50)
       {
         uint8_t octet_len = datatype - 1;
-        //Serial.print("ich soll einen String zurüchgeben mit zeichen: ");
+        //Serial.print("ich soll einen String zurÃ¼chgeben mit zeichen: ");
         //Serial.println(octet_len);
         if (octet_len > 4) {
           Serial.println("Mehr als 4 Bytes sind als Rueckgabe fuer Octet leider nicht moeglich.");
@@ -642,7 +642,7 @@ class sml
     uint8_t rawlength;
 
     /*
-       Diese Routine wird nun benötigt, wenn die Eingangsdaten als HexStrom vorliegen und erst in Byte-Daten umgewandelt werden sollen
+       Diese Routine wird nun benÃ¶tigt, wenn die Eingangsdaten als HexStrom vorliegen und erst in Byte-Daten umgewandelt werden sollen
     */
     bool initdata(const char* input)
     {
