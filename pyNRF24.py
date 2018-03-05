@@ -1,38 +1,45 @@
-#!/usr/bin/python
-# raspberry pi nrf24l01 hub
-# more details at http://blog.riyas.org
-# Credits to python port of nrf24l01, Joao Paulo Barrac & maniacbugs original c library
+#!/usr/bin/env python
 
-from nrf24 import NRF24
+from __future__ import print_function
 import time
-from time import gmtime, strftime
+from struct import *
+from RF24 import *
+from RF24Network import *
+from RF24Mesh import *
+import RPi.GPIO as GPIO
 
-pipes = [[0xf0, 0xf0, 0xf0, 0xf0, 0xe1], [0xf0, 0xf0, 0xf0, 0xf0, 0xd2]]
 
-radio = NRF24()
-radio.begin(0, 0,25,18) #set gpio 25 as CE pin
-radio.setRetries(15,15)
-radio.setPayloadSize(32)
-radio.setChannel(0x4c)
-radio.setDataRate(NRF24.BR_250KBPS)
-radio.setPALevel(NRF24.PA_MAX)
-radio.setAutoAck(1)
-radio.openWritingPipe(pipes[0])
-radio.openReadingPipe(1, pipes[1])
+def rf24_init():
+    """Initiate the whole rf24 stuff"""
+    global radio, network, mesh
+	
+    #RPi B
+    # Setup for GPIO 22 CE and CE1 CSN with SPI Speed @ 8Mhz
+    radio = RF24(RPI_V2_GPIO_P1_22, BCM2835_SPI_CS0, BCM2835_SPI_SPEED_8MHZ)
+    network = RF24Network(radio)
+    mesh = RF24Mesh(radio,network)
 
-radio.startListening()
-radio.stopListening()
+    # set the Node ID as Master, which will be 0
+    mesh.setNodeID(0)
+    mesh.begin()
+    #mesh.begin(108, RF24_250KBPS)
+    #radio.setPALevel(RF24_PA_MAX) # Power Amplifier
+    radio.printDetails()
 
-radio.printDetails()
-radio.startListening()
+def rf24_run():
+    while 1:
+	mesh.update()
+	mesh.DHCP()
+	while network.available():
+	header, payload = network.read(16)
+	print("empfange etwas, payload ", len(payload))
+	ms, number = unpack(">LL", bytes(payload))
+        #print("received payload ", number," at ", ms, " from", oct(header.from_node))
+	type = header.type
+	print(type)	
+	time.sleep(1)
 
-while True:
-    pipe = [0]
-    while not radio.available(pipe, True):
-        time.sleep(1000/1000000.0)
-    recv_buffer = []
-    radio.read(recv_buffer)
-    out = ''.join(chr(i) for i in recv_buffer)
-    print out
- 
-
+if __name__ == "__main__":
+    rf24_init()
+    rf24_run()
+    exit()
