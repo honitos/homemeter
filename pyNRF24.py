@@ -28,16 +28,16 @@ def rf24_init():
 
 def rf24_run():
     while 1:
-	mesh.update()
-	mesh.DHCP()
-	while network.available():
-	header, payload = network.read(16)
-	print("empfange etwas, payload ", len(payload))
-	ms, number = unpack(">LL", bytes(payload))
-        #print("received payload ", number," at ", ms, " from", oct(header.from_node))
-	type = header.type
-	print(type)	
-	time.sleep(1)
+		mesh.update()
+		mesh.DHCP()
+		while network.available():
+			header, payload = network.read(16)
+			print("empfange etwas, payload ", len(payload))
+			ms, number = unpack(">LL", bytes(payload))
+	        #print("received payload ", number," at ", ms, " from", oct(header.from_node))
+			type = header.type
+			print(type)	
+			time.sleep(1)
 
 if __name__ == "__main__":
     rf24_init()
