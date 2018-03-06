@@ -1,18 +1,14 @@
 
 
- /** RF24Mesh_Example_Master.ino by TMRh20
+ /** homeServer by honitos 
   *
-  * Note: This sketch only functions on -Arduino Due-
+  * This program works on any Raspberry Pi version that meets the following requirements:
   *
-  * This example sketch shows how to manually configure a node via RF24Mesh as a master node, which
-  * will receive all data from sensor nodes.
-  *
-  * The nodes can change physical or logical position in the network, and reconnect through different
-  * routing nodes as required. The master node manages the address assignments for the individual nodes
-  * in a manner similar to DHCP.
-  *
+  * - NRF24L01+ wireless transceiver module 2.4GHz connected to raspberry
+  * - mysql-compatible database available with tables initialised
+  * - RF24-libraries installed [you can get them here: [http://tmrh20.github.io/RF24/]
+  * This server listens
   */
-
 
 #include "stdio.h"
 #include <unistd.h>
@@ -21,9 +17,9 @@
 
 #include <honitos_sql.h>
 
-#include "RF24Mesh/RF24Mesh.h"
 #include <RF24/RF24.h>
 #include <RF24Network/RF24Network.h>
+#include "RF24Mesh/RF24Mesh.h"
 
 using namespace std;
 
