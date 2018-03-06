@@ -1,0 +1,331 @@
+# depslib dependency file v1.0
+1484059966 source:/home/pi/projekte/projekt1/main.c
+	<stdio.h>
+	<stdlib.h>
+
+1465240904 source:/nrf24scannerPi/scanner.cpp
+	<stdint.h>
+	<stdio.h>
+	<time.h>
+	<string.h>
+	<sys/time.h>
+	<stddef.h>
+	"bcm2835.h"
+
+1465240904 /nrf24scannerPi/bcm2835.h
+	<stdint.h>
+
+1465240904 source:/home/pi/nrf24scannerPi/bcm2835.c
+	<stdlib.h>
+	<stdio.h>
+	<errno.h>
+	<fcntl.h>
+	<sys/mman.h>
+	<string.h>
+	<sys/time.h>
+	<time.h>
+	<unistd.h>
+	"./bcm2835.h"
+
+1465240904 /home/pi/nrf24scannerPi/bcm2835.h
+	<stdint.h>
+
+1465240904 source:/home/pi/nrf24scannerPi/scanner.cpp
+	<stdint.h>
+	<stdio.h>
+	<time.h>
+	<string.h>
+	<sys/time.h>
+	<stddef.h>
+	"bcm2835.h"
+
+1484207977 source:/home/pi/Development/rf24libs/RF24Mesh/examples_RPi/RF24Mesh_Example.cpp
+	"RF24Mesh/RF24Mesh.h"
+	<RF24/RF24.h>
+	<RF24Network/RF24Network.h>
+
+1484409192 source:/home/pi/Development/rf24libs/RF24Mesh/examples_RPi/RF24Mesh_Example_Master.cpp
+	"RF24Mesh/RF24Mesh.h"
+	<RF24/RF24.h>
+	<RF24Network/RF24Network.h>
+
+1483982008 /home/pi/Development/RF24/RF24.h
+	<RF24_config.h>
+
+1484207977 source:/home/pi/Development/rf24libs/RF24Mesh/RF24Mesh.cpp
+	"RF24Mesh.h"
+	"RF24Mesh_config.h"
+	<fstream>
+
+1484207977 /home/pi/Development/rf24libs/RF24Mesh/RF24Mesh.h
+	<stdio.h>
+	<stdlib.h>
+	"RF24Mesh_config.h"
+	<RF24/RF24.h>
+	<RF24Network/RF24Network.h>
+	<RF24.h>
+	<RF24Network.h>
+	<stddef.h>
+	<stdint.h>
+
+1484207977 /home/pi/Development/rf24libs/RF24Mesh/RF24Mesh_config.h
+
+1484207862 /home/pi/Development/rf24libs/RF24/RF24.h
+	"RF24_config.h"
+	"utility/includes.h"
+	<DigitalIO.h>
+
+1484207862 /home/pi/Development/rf24libs/RF24/RF24_config.h
+	"utility/ATXMegaD3/RF24_arch_config.h"
+	"utility/includes.h"
+	"utility/ATTiny/RF24_arch_config.h"
+	"utility/LittleWire/RF24_arch_config.h"
+	"utility/Teensy/RF24_arch_config.h"
+	<Arduino.h>
+	<SPI_UART.h>
+	<SPI.h>
+	<stdint.h>
+	<stdio.h>
+	<string.h>
+	<SPI_UART.h>
+	<SPI.h>
+	<avr/pgmspace.h>
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/ATXMegaD3/RF24_arch_config.h
+	<stddef.h>
+	<avr/pgmspace.h>
+	"spi.h"
+	"gpio.h"
+	"compatibility.h"
+	<stdint.h>
+	<stdio.h>
+	<string.h>
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/ATXMegaD3/spi.h
+	<avr/io.h>
+	<stdint.h>
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/ATXMegaD3/gpio.h
+	<avr/io.h>
+	"gpio_helper.h"
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/ATXMegaD3/gpio_helper.h
+	<avr/io.h>
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/ATXMegaD3/compatibility.h
+	<stddef.h>
+
+1484207864 /home/pi/Development/rf24libs/RF24/utility/includes.h
+	"RPi/bcm2835.h"
+	"RPi/RF24_arch_config.h"
+	"RPi/interrupt.h"
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/RPi/bcm2835.h
+	<stdint.h>
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/RPi/RF24_arch_config.h
+	<stdint.h>
+	<stdio.h>
+	<time.h>
+	<string.h>
+	<sys/time.h>
+	<stddef.h>
+	"bcm2835.h"
+	"spi.h"
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/RPi/spi.h
+	<stdio.h>
+	"bcm2835.h"
+	"interrupt.h"
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/RPi/interrupt.h
+	"RF24_arch_config.h"
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/ATTiny/RF24_arch_config.h
+	<WProgram.h>
+	<Arduino.h>
+	<stddef.h>
+	"spi.h"
+	<avr/pgmspace.h>
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/ATTiny/spi.h
+	<stdio.h>
+	<Arduino.h>
+	<avr/pgmspace.h>
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/LittleWire/RF24_arch_config.h
+	<stdint.h>
+	<stdio.h>
+	<time.h>
+	<string.h>
+	<sys/time.h>
+	<stddef.h>
+	<LittleWireSPI/littlewirespi.h>
+	<LittleWireSPI/avr_fixes.h>
+
+1484207862 /home/pi/Development/rf24libs/RF24/utility/Teensy/RF24_arch_config.h
+	<WProgram.h>
+	<Arduino.h>
+	<stddef.h>
+	<stdint.h>
+	<stdio.h>
+	<string.h>
+	<SPI.h>
+
+1484207935 /home/pi/Development/rf24libs/RF24Network/RF24Network.h
+	<stddef.h>
+	<stdint.h>
+	"RF24Network_config.h"
+	<stdint.h>
+	<stdio.h>
+	<time.h>
+	<string.h>
+	<sys/time.h>
+	<stddef.h>
+	<assert.h>
+	<map>
+	<utility>
+	<queue>
+	"../../rf24lib/rf24lib/RF24.h"
+
+1484207935 /home/pi/Development/rf24libs/RF24Network/RF24Network_config.h
+	<RF24/RF24_config.h>
+	"../../rf24lib/rf24lib/RF24_config.h"
+	<RF24_config.h>
+
+1484207996 /usr/local/include/RF24Mesh/RF24Mesh.h
+	<stdio.h>
+	<stdlib.h>
+	"RF24Mesh_config.h"
+	<RF24/RF24.h>
+	<RF24Network/RF24Network.h>
+	<RF24.h>
+	<RF24Network.h>
+	<stddef.h>
+	<stdint.h>
+
+1484207996 /usr/local/include/RF24Mesh/RF24Mesh_config.h
+
+1484207923 /usr/local/include/RF24/RF24.h
+	"RF24_config.h"
+	"utility/includes.h"
+	<DigitalIO.h>
+
+1484207923 /usr/local/include/RF24/RF24_config.h
+	"utility/ATXMegaD3/RF24_arch_config.h"
+	"utility/includes.h"
+	"utility/ATTiny/RF24_arch_config.h"
+	"utility/LittleWire/RF24_arch_config.h"
+	"utility/Teensy/RF24_arch_config.h"
+	<Arduino.h>
+	<SPI_UART.h>
+	<SPI.h>
+	<stdint.h>
+	<stdio.h>
+	<string.h>
+	<SPI_UART.h>
+	<SPI.h>
+	<avr/pgmspace.h>
+
+1484207923 /usr/local/include/RF24/utility/includes.h
+	"RPi/bcm2835.h"
+	"RPi/RF24_arch_config.h"
+	"RPi/interrupt.h"
+
+1484207923 /usr/local/include/RF24/utility/RPi/bcm2835.h
+	<stdint.h>
+
+1484207923 /usr/local/include/RF24/utility/RPi/RF24_arch_config.h
+	<stdint.h>
+	<stdio.h>
+	<time.h>
+	<string.h>
+	<sys/time.h>
+	<stddef.h>
+	"bcm2835.h"
+	"spi.h"
+
+1484207923 /usr/local/include/RF24/utility/RPi/spi.h
+	<stdio.h>
+	"bcm2835.h"
+	"interrupt.h"
+
+1484207923 /usr/local/include/RF24/utility/RPi/interrupt.h
+	"RF24_arch_config.h"
+
+1484207973 /usr/local/include/RF24Network/RF24Network.h
+	<stddef.h>
+	<stdint.h>
+	"RF24Network_config.h"
+	<stdint.h>
+	<stdio.h>
+	<time.h>
+	<string.h>
+	<sys/time.h>
+	<stddef.h>
+	<assert.h>
+	<map>
+	<utility>
+	<queue>
+	"../../rf24lib/rf24lib/RF24.h"
+
+1484207973 /usr/local/include/RF24Network/RF24Network_config.h
+	<RF24/RF24_config.h>
+	"../../rf24lib/rf24lib/RF24_config.h"
+	<RF24_config.h>
+
+1484657030 source:/home/pi/projekte/projekt1/main.cpp
+	"RF24Mesh/RF24Mesh.h"
+	<RF24/RF24.h>
+	<RF24Network/RF24Network.h>
+
+1519217470 source:/home/pi/Development/projekte/projekt1/main.cpp
+	"stdio.h"
+	<unistd.h>
+	"string.h"
+	"time.h"
+	<honitos_sql.h>
+	"RF24Mesh/RF24Mesh.h"
+	<RF24/RF24.h>
+	<RF24Network/RF24Network.h>
+
+1496644682 /usr/include/mysql/mysql.h
+	<standards.h>
+	<sys/types.h>
+	<winsock2.h>
+	"mysql_version.h"
+	"mysql_com.h"
+	"mysql_time.h"
+	"my_list.h"
+	"typelib.h"
+	"my_alloc.h"
+
+1501281997 /usr/include/mysql/mysql_version.h
+	<custom_conf.h>
+
+1496644682 /usr/include/mysql/mysql_com.h
+
+1496644682 /usr/include/mysql/mysql_time.h
+
+1496644682 /usr/include/mysql/my_list.h
+
+1496644682 /usr/include/mysql/typelib.h
+	"my_alloc.h"
+
+1496644682 /usr/include/mysql/my_alloc.h
+
+1493238217 /home/pi/Development/projekte/projekt1/include/honitos_sql.h
+	<string>
+	<iostream>
+	<unistd.h>
+	<stdio.h>
+	<stdlib.h>
+	<mysql.h>
+	"mysql/mysql.h"
+
+1486134378 source:/home/pi/Development/projekte/projekt1/src/sql.cpp
+	"honitos_sql.h"
+
+1493238686 source:/home/pi/Development/projekte/projekt1/src/honitos_sql.cpp
+	"honitos_sql.h"
+
