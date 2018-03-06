@@ -329,3 +329,15 @@
 1493238686 source:/home/pi/Development/projekte/projekt1/src/honitos_sql.cpp
 	"honitos_sql.h"
 
+1493238686 source:/home/pi/Development/python/homemeter/server/c/src/honitos_sql.cpp
+	"honitos_sql.h"
+
+1493238217 /home/pi/Development/python/homemeter/server/c/include/honitos_sql.h
+	<string>
+	<iostream>
+	<unistd.h>
+	<stdio.h>
+	<stdlib.h>
+	<mysql.h>
+	"mysql/mysql.h"
+

@@ -47,7 +47,7 @@
 			<Add directory="/usr/local/lib" />
 		</Linker>
 		<Unit filename="include/honitos_sql.h" />
-		<Unit filename="main.cpp">
+		<Unit filename="src/homeserver.cpp">
 			<Option target="Debug" />
 		</Unit>
 		<Unit filename="src/honitos_sql.cpp" />
