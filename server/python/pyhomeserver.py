@@ -1,54 +1,66 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+#from datetime import datetime
+import datetime
 import time
-from datetime import datetime
+import logging
 import MySQLdb
-from struct import *
+import RPi.GPIO as GPIO
+from struct import *        # this way we integrate all the contents in the global namespace
 from RF24 import *
 from RF24Network import *
 from RF24Mesh import *
-import RPi.GPIO as GPIO
 
+DATABASE_HOSTNAME = "192.168.2.3"
+DATABASE_NAME = "smartmeter"
+DATABASE_USER = "smartmeter"
+DATABASE_PASSWD = "smartmeter"
 
-def mysql_init():
-	global db,cursor
-	db = MySQLdb.connect(host="192.168.2.3",
-                        db="smartmeter",
-                        user="smartmeter",
-                        passwd="smartmeter")
-	cursor = db.cursor()
-	#cursor.execute("SHOW fields from easymeter")
-	#result = cursor.fetchall()
-	#for i in result:
-	#    print (i)
+def mysql_init(host=DATABASE_HOSTNAME,db=DATABASE_NAME,user=DATABASE_USER,passwd=DATABASE_PASSWD):
+    global sqldb
+    
+    sqldb = MySQLdb.connect(host,db,user,passwd)
+    sqlcursor = sqldb.cursor()
+    sqlcursor.execute("SHOW tables")
+    sqltables = [v for (v,) in sqlcursor]
+    if "easymeter" in sqltables:
+        print ("Table 'easymeter' existiert...")
+    else:
+        # Create a table to store the data, if it does not exists
+        print("Table 'easymeter' does not exist in that database '",db,"', creating table...")
+        sqlcommand = "CREATE TABLE IF NOT EXISTS `easymeter` ("
+        sqlcommand+= "`SensorTime` int(10) unsigned NOT NULL DEFAULT '0',"
+        sqlcommand+= "`Current` int(4) unsigned DEFAULT NULL,"
+        sqlcommand+= "`Total` int(4) unsigned DEFAULT NULL,"
+        sqlcommand+= "`DateTime` datetime(3) NOT NULL DEFAULT '0000-00-00 00:00:00.000',"
+        sqlcommand+= "PRIMARY KEY (`SensorTime`),"
+        sqlcommand+= "UNIQUE KEY `SensorTime` (`SensorTime`),"
+        sqlcommand+= "KEY `DateTime` (`DateTime`)"
+        sqlcommand+= ") ENGINE=InnoDB DEFAULT CHARSET=latin1"
+        sqlcursor.execute(sqlcommand)
+    return 0    
 
 def mysql_insert(payload):
-	now = datetime.utcnow()
+    now = datetime.datetime.utcnow()
+    actSensorTime,valTotal,valTarif1,valTarif2,valCurrent = unpack("<LLLLL", bytes(payload))
 
-	actSensorTime,valTotal,valTarif1,valTarif2,valCurrent = unpack("<LLLLL", bytes(payload))
+    sqlcommand = "INSERT INTO easymeter (SensorTime,Current,Total,Datetime) "
+    sqlcommand += "VALUES ("
+    sqlcommand += str(actSensorTime) + ","
+    sqlcommand += str(valCurrent) + ","
+    sqlcommand += str(valTotal) + ","
+    sqlcommand += "Now(3))"
+    #print(sql_command)
 
-	sql_command = "INSERT INTO easymeter (SensorTime,Current,Total,Datetime) "
-	sql_command += "VALUES ("
-	sql_command += str(actSensorTime) + ","
-	sql_command += str(valCurrent) + ","
-	sql_command += valTotal + ","
-	sql_command += datetime.utcnow() #"Now(3))";
-
-	#sql_command = "INSERT INTO easymeter (SensorTime,Total,Leistung,Tagtarif,Spartarif)"
-	#sql_command = sql_command + " VALUES ('" + str(now) + "','2','3','4','5')"
-	print(sql_command)
-
-	#cursor = db.cursor()
-	#cursor.execute(sql_command)
-	#db.commit()
-	#print(cursor.fetchall())
-
+    sqlcursor = sqldb.cursor()
+    sqlcursor.execute(sqlcommand)
+    sqldb.commit()
 
 def rf24_init():
     """Initiate the whole rf24 stuff"""
     global radio, network, mesh
-	
+    
     #RPi B
     # Setup for GPIO 22 CE and CE1 CSN with SPI Speed @ 8Mhz
     radio = RF24(RPI_V2_GPIO_P1_22, BCM2835_SPI_CS0, BCM2835_SPI_SPEED_8MHZ)
@@ -58,56 +70,63 @@ def rf24_init():
     # set the Node ID as Master, which will be 0
     mesh.setNodeID(0)
 
-	# Connect to the mesh
+    # Connect to the mesh
     mesh.begin()
 
     #mesh.begin(108, RF24_250KBPS)
     #radio.setPALevel(RF24_PA_MAX) # Power Amplifier
     radio.printDetails()
+    return 0
 
 def rf24_run():
 
-	# dataformat from smartmeter client - that is the payload:
-	# 
-	# sml_dataset {
-	#	uint32_t actSenstorTime;
-	#	uint32_t valTotal;
-	#	uint32_t valTarif1;
-	#   uint32_t valTarif2;
-	#   uint32_t valCurrent;
-	# }
+    # dataformat from smartmeter client - that is the payload:
+    # 
+    # sml_dataset {
+    #   uint32_t actSenstorTime;
+    #   uint32_t valTotal;
+    #   uint32_t valTarif1;
+    #   uint32_t valTarif2;
+    #   uint32_t valCurrent;
+    # }
  
-	header = RF24NetworkHeader()
-	while 1:
-		# Call network.update as usual to keep the network updated
-		mesh.update()
+    header = RF24NetworkHeader()
+    while 1:
+        # Call network.update as usual to keep the network updated
+        mesh.update()
 
- 		# In addition, keep the 'DHCP service' running on the master node so address$
-  		# be assigned to the sensor nodes
-		mesh.DHCP()
+        # In addition, keep the 'DHCP service' running on the master node so address$
+        # be assigned to the sensor nodes
+        mesh.DHCP()
 
-		# Check for incoming data from the sensors
-		while network.available():
-			network.peek(header)
-			if chr(header.type) == "E":
-				header, payload = network.read(20)
-				if len(payload) == 20:
-					actSensorTime,valTotal,valTarif1,valTarif2,valCurrent = unpack("<LLLLL", bytes(payload))
-					print("Total:",valTotal,",Current:",valCurrent,"from Client",oct(header.from_node)," at:",actSensorTime)
-					mysql_insert(payload)
-				else:
-					print("Length of payload not correct, dataset will be ignored.")
-			else:
-				#network.read(header,0,0);
-				print("Recieved bad message type (%d) from node %d",header.type,oct(header.from_node))
+        # Check for incoming data from the sensors
+        while network.available():
+            network.peek(header)
+            if chr(header.type) == "E":
+                header, payload = network.read(20)
+                if len(payload) == 20:
+                    actSensorTime,valTotal,valTarif1,valTarif2,valCurrent = unpack("<LLLLL", bytes(payload))
+                    print("Total:",valTotal,"Current:",valCurrent,"from Client",oct(header.from_node)," at:",actSensorTime,end="")
+                    mysqlStatus = mysql_insert(payload)
+                    if mysqlStatus != 0:
+                        print("--> written to database.")
+                    else:
+                        print("--> error writing t odb, error",mysqlStatus)
+                else:
+                    print("Length of payload not correct, dataset will be ignored.")
+            else:
+                #network.read(header,0,0);
+                print("Recieved bad message type",header.type,"from node",oct(header.from_node))
 
-			time.sleep(1)
+            time.sleep(2)
 
 if __name__ == "__main__":
-	mysql_init()
-	rf24_init()
-	print("honitos HomeServer V0.01 started...\n")
-	rf24_run()
-	if db:
-		db.close()
-	exit()
+    logging.info("Program started...")
+    if mysql_init() == 0:
+        if rf24_init() == 0:
+            print("honitos HomeServer V0.01 started...\n")
+            rf24_run()
+            if sql:
+                sql.close()
+    logging.info("Program terminated...")
+    exit()
