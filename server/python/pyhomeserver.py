@@ -2,11 +2,47 @@
 
 from __future__ import print_function
 import time
+from datetime import datetime
+import MySQLdb
 from struct import *
 from RF24 import *
 from RF24Network import *
 from RF24Mesh import *
 import RPi.GPIO as GPIO
+
+
+def mysql_init():
+	global db,cursor
+	db = MySQLdb.connect(host="192.168.2.3",
+                        db="smartmeter",
+                        user="smartmeter",
+                        passwd="smartmeter")
+	cursor = db.cursor()
+	#cursor.execute("SHOW fields from easymeter")
+	#result = cursor.fetchall()
+	#for i in result:
+	#    print (i)
+
+def mysql_insert(payload):
+	now = datetime.utcnow()
+
+	actSensorTime,valTotal,valTarif1,valTarif2,valCurrent = unpack("<LLLLL", bytes(payload))
+
+	sql_command = "INSERT INTO easymeter (SensorTime,Current,Total,Datetime) "
+	sql_command += "VALUES ("
+	sql_command += str(actSensorTime) + ","
+	sql_command += str(valCurrent) + ","
+	sql_command += valTotal + ","
+	sql_command += datetime.utcnow() #"Now(3))";
+
+	#sql_command = "INSERT INTO easymeter (SensorTime,Total,Leistung,Tagtarif,Spartarif)"
+	#sql_command = sql_command + " VALUES ('" + str(now) + "','2','3','4','5')"
+	print(sql_command)
+
+	#cursor = db.cursor()
+	#cursor.execute(sql_command)
+	#db.commit()
+	#print(cursor.fetchall())
 
 
 def rf24_init():
@@ -23,7 +59,6 @@ def rf24_init():
     mesh.setNodeID(0)
 
 	# Connect to the mesh
-    print("honitos HomeServer V0.01 started...\n");
     mesh.begin()
 
     #mesh.begin(108, RF24_250KBPS)
@@ -59,6 +94,7 @@ def rf24_run():
 				if len(payload) == 20:
 					actSensorTime,valTotal,valTarif1,valTarif2,valCurrent = unpack("<LLLLL", bytes(payload))
 					print("Total:",valTotal,",Current:",valCurrent,"from Client",oct(header.from_node)," at:",actSensorTime)
+					mysql_insert(payload)
 				else:
 					print("Length of payload not correct, dataset will be ignored.")
 			else:
@@ -68,6 +104,10 @@ def rf24_run():
 			time.sleep(1)
 
 if __name__ == "__main__":
-    rf24_init()
-    rf24_run()
-    exit()
+	mysql_init()
+	rf24_init()
+	print("honitos HomeServer V0.01 started...\n")
+	rf24_run()
+	if db:
+		db.close()
+	exit()
