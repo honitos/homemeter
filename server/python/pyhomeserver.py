@@ -8,21 +8,29 @@ import datetime
 import time
 from struct import *        # this way we integrate all the contents in the global namespace without using struct.-namespace
 
+# windowing 
+from intuition import intuition
+screen = None
 
 # --
 # -- configuring the logger
 import logging
 vlogformatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-vloghandler = logging.StreamHandler()
-vloghandler.setFormatter(vlogformatter)
+termhandler = logging.StreamHandler()
+termhandler.setFormatter(vlogformatter)
+filehandler = logging.FileHandler("homeserver.log")
+filehandler.setFormatter(vlogformatter)
 vlog = logging.getLogger()
-vlog.setLevel(logging.DEBUG)
-vlog.addHandler(vloghandler)
+vlog.setLevel(logging.INFO)
+#vlog.addHandler(termhandler)
+vlog.addHandler(filehandler)
 
 
 # --
 # -- include sql-stuff
 import MySQLdb
+sqldb = None
+
 # -- define some configurration for the sql-access
 DATABASE_HOSTNAME = "192.168.2.3"
 DATABASE_NAME = "smartmeter"
@@ -49,18 +57,17 @@ from RF24Mesh import *
 # --------------------------------------------------------------------------------------
 
 def mysql_init(host=DATABASE_HOSTNAME,db=DATABASE_NAME,user=DATABASE_USER,passwd=DATABASE_PASSWD):
-    global sqldb
-    
+    global sqldb 
     vlog.info("Initiating database-connections...")
     sqldb = MySQLdb.connect(host,db,user,passwd)
     sqlcursor = sqldb.cursor()
     sqlcursor.execute("SHOW tables")
     sqltables = [v for (v,) in sqlcursor] # make a list of sqlcursor
     if DATABASE_TABLE in sqltables:
-        vlog.debug("Table '%s' found, will be used for storing data.",DATABASE_TABLE)
+        vlog.info("Table '%s' found, will be used for storing data.",DATABASE_TABLE)
     else:
         # Create a table to store the data, if it does not exists
-        sqlcommand = "CREATE TABLE IF NOT EXISTS `" + DATABASE_TABLE + "` ("
+        sqlcommand = "CREATE TABLE IF NOT EXISTS `%(DATABASE_TABLE)` (" % locals()
         sqlcommand+= "`SensorTime` int(10) unsigned NOT NULL DEFAULT '0',"
         sqlcommand+= "`Current` int(4) unsigned DEFAULT NULL,"
         sqlcommand+= "`Total` int(4) unsigned DEFAULT NULL,"
@@ -81,7 +88,7 @@ def mysql_init(host=DATABASE_HOSTNAME,db=DATABASE_NAME,user=DATABASE_USER,passwd
             return False
 
         except:
-            vlog.error("I am sorry, but we have an undhandled exception here:")
+            vlog.error("I am sorry, but we have an unhandled exception here:")
             e = sys.exc_info()[:2]
             #vlog.error("%s - Error (%s)" % e)
             vlog.error(e)
@@ -96,9 +103,7 @@ def mysql_insert(payload):
 
     sqlcommand = "INSERT INTO easymeter (SensorTime,Current,Total,Datetime) "
     sqlcommand += "VALUES ("
-#    sqlcommand += str(actSensorTime) + ","
-    sqlcommand += str("1") + ","
-
+    sqlcommand += str(actSensorTime) + ","
     sqlcommand += str(valCurrent) + ","
     sqlcommand += str(valTotal) + ","
     sqlcommand += "Now(3))"
@@ -116,7 +121,7 @@ def mysql_insert(payload):
             vlog.error("SQLDB-Error (%d): %s" % (e.args[0], e.args[1]))
 
     except:
-        vlog.error("I am sorry, but we have an undhandled exception here:")
+        vlog.error("I am sorry, but we have an unhandled exception here:")
         e = sys.exc_info()
         vlog.error(e)
         return False
@@ -144,8 +149,10 @@ def rf24_init():
 
     #mesh.begin(108, RF24_250KBPS)
     #radio.setPALevel(RF24_PA_MAX) # Power Amplifier
-    if vlog.getEffectiveLevel() == logging.DEBUG: radio.printDetails()
+    #if vlog.getEffectiveLevel() == logging.DEBUG: radio.printDetails()
+
     return True
+
 
 def rf24_run():
 
@@ -171,12 +178,26 @@ def rf24_run():
 
         # Check for incoming data from the sensors
         while network.available():
+            tevent = screen.screen.getch()
+            if tevent in [27,ord("q"),screen.curses.KEY_EXIT]:
+                return None
+            elif tevent == screen.curses.KEY_RESIZE:
+                screen.update_window()
+            elif tevent != -1:
+                screen.write_status("keypress detected = " + str(tevent))
+
             network.peek(header)
             if chr(header.type) == "E":
                 header, payload = network.read(20)
                 if len(payload) == 20:
                     actSensorTime,valTotal,valTarif1,valTarif2,valCurrent = unpack("<LLLLL", bytes(payload))
                     vlog.debug("Total: %s Current: %s from Client %s at %s" %(valTotal,valCurrent,oct(header.from_node),actSensorTime))
+
+                    if screen:
+                        screen.screen.addstr(4,2,"Current:            Total:            SensorTime:")
+                        screen.screen.addstr(4,11,str(valCurrent),screen.curses.A_BOLD)
+                        screen.screen.addstr(4,29,str(valTotal),screen.curses.A_BOLD)
+                        screen.screen.addstr(4,52,str(actSensorTime),screen.curses.A_BOLD)
 
                     mysqlStatus = mysql_insert(payload)
                     if mysqlStatus == False: 
@@ -185,11 +206,12 @@ def rf24_run():
                 else:
                     vlog.warn("Length of payload (%s) not correct, dataset will be ignored.",len(payload))
             else:
-                #network.read(header,0,0);
-                vlog.warn("Recieved bad message type",header.type,"from node",oct(header.from_node))
+                #header = network.read(20)
+                vlog.warn("Received bad message type",header.type,"from node",oct(header.from_node))
 
-            time.sleep(2)
-
+            screen.screen.addstr(1,screen.width-18,time.strftime("%x %X"),screen.curses.A_BOLD)
+            screen.screen.refresh()
+            time.sleep(1)
 
 # --------------------------------------------------------------------------------------
 # --
@@ -197,20 +219,39 @@ def rf24_run():
 # --
 # --------------------------------------------------------------------------------------
 if __name__ == "__main__":
-    vlog.info("Program started...")
-    if mysql_init() == True:
-        if rf24_init() == True:
-            vlog.info("honitos HomeServer V0.01 started...")
-            rf24_run()
+    try:
+        vlog.info("Program started...")
+        screen = intuition()
+        screen.draw_window()
+        screen.write_status("Initiating DB-Connection...")
+        if mysql_init() == True:
+            screen.write_status("Initiating RF-Network...")
+            if rf24_init() == True:
+                vlog.info("honitos HomeServer V0.01 started...")
 
-    #-- closing connection to db
-    if sqldb:
-        vlog.debug("Closing database...")
-        sqldb.close()
+                screen.write_status("Start listing ...")
+                screen.screen.nodelay(True)
+                # -- here comes the main loop
+                rf24_run()
 
-    vlog.debug("Program terminated...")
+    except:
+        e = sys.exc_info()
+        vlog.error(e)
+        raise
+                        
+    finally:
+        #-- closing connection to db
+        if screen: screen.close()
+
+        if sqldb:
+            vlog.info("Closing database...")
+            sqldb.close()
+
+        vlog.debug("Program terminated...")
+
 
 else:
     vlog.error("This program may not be executed as a module.")
 
 exit()
+
