@@ -9,7 +9,7 @@ import time
 from struct import *        # this way we integrate all the contents in the global namespace without using struct.-namespace
 
 # windowing 
-from intuition import intuition
+from modules.intuition import intuition
 screen = None
 
 # --
