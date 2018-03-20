@@ -1,8 +1,8 @@
 // -- global settings
 #define _debugmode
-#define use_WLAN  1
-#define ledPin    13
-#define dataPin   2
+#define use_WLAN  1   // switch to enable or disable sending (for debugging purposes)
+#define ledPin    13  // if we want to use the LED on arduino to signal something
+#define dataPin   2   // the PIN used for SoftwareSerial
 byte ledState;
 
 // -- variables to evaluate uptime
