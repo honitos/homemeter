@@ -1,8 +1,10 @@
 // -- global settings
 #define _debugmode
-#define use_WLAN  1   // switch to enable or disable sending (for debugging purposes)
-#define ledPin    13  // if we want to use the LED on arduino to signal something
-#define dataPin   2   // the PIN used for SoftwareSerial
+#define use_WLAN      1   // switch to enable or disable sending (for debugging purposes)
+#define ledPin        13  // if we want to use the LED on arduino to signal something
+#define serial_pin    2   // the receive-Pin for SoftwareSerial-communication (photo transistor)
+#define rf24_cepin    6   // the CE-Pin for RF24-communication
+#define rf24_cspin    7   // the CS-Pin for RF24-communication
 byte ledState;
 
 // -- variables to evaluate uptime
@@ -25,7 +27,7 @@ sml mysml;
 
 // -- routines to read serial datastream via photoled from smartmeter
 #include <SoftwareSerial.h>
-SoftwareSerial mySerial(2, 11,false);
+SoftwareSerial mySerial(serial_pin, 11,false); // RX = serialpin, TX = 11 , will not be used
 const unsigned int MAXBUF = 255;
 unsigned short bufCnt = 0;
 const unsigned long eotTimeoutMs = 500;    // if no char received for 500 ms, declare end of transmission
@@ -66,7 +68,7 @@ void setup() {
 
   // -- set pin modes
   pinMode(ledPin, OUTPUT);
-  pinMode(dataPin, INPUT);
+  pinMode(serial_pin, INPUT);
   
   // -- open serial communications and wait for port to open:
   Serial.begin(115200);
