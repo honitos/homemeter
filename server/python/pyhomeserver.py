@@ -171,12 +171,11 @@ def rf24_run():
     while 1:
         # Call network.update as usual to keep the network updated
         mesh.update()
-
         # In addition, keep the 'DHCP service' running on the master node so address$
         # be assigned to the sensor nodes
         mesh.DHCP()
-
         # Check for incoming data from the sensors
+        
         while network.available():
             tevent = screen.screen.getch()
             if tevent in [27,ord("q"),screen.curses.KEY_EXIT]:
@@ -185,6 +184,7 @@ def rf24_run():
                 screen.update_window()
             elif tevent != -1:
                 screen.write_status("keypress detected = " + str(tevent))
+
 
             network.peek(header)
             if chr(header.type) == "E":
