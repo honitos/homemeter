@@ -1,4 +1,4 @@
-Here are the files for the python (2.7) version of the server.
+These are the files for the python (2.7) version of the server.
 
 It receives the processed smartmeter-data from the arduino-client an writes it into a mariadb-database.
 It uses the famous rf24-libs by TMRh20 (http://tmrh20.github.io/RF24/index.html).
