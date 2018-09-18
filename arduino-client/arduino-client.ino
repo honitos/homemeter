@@ -1,7 +1,7 @@
 // -- global settings
 #define _debugmode
 #define use_WLAN      1   // switch to enable or disable sending (for debugging purposes)
-#define ledPin        13  // if we want to use the LED on arduino to signal something
+#define ledPin        5  // if we want to use the LED on arduino to signal something
 #define serial_pin    2   // the receive-Pin for SoftwareSerial-communication (photo transistor)
 #define rf24_cepin    6   // the CE-Pin for RF24-communication
 #define rf24_cspin    7   // the CS-Pin for RF24-communication
@@ -12,17 +12,19 @@ unsigned long current_millis_value = 0;
 unsigned long previous_millis_value = 0;
 unsigned long diff_millis_value = 0;
 unsigned long seconds = 0;
+unsigned long seconds_before = 0;
 unsigned long minutes = 0;
 unsigned long hours = 0;
+unsigned long seconds_miss = 0;
 
 // ---------------------------------------------------------
 // includes used in this project
 // ---------------------------------------------------------
-#include <printf.h>
+#include "printf.h"
 #include <MemoryFree.h>
 
 // -- routines for processing the datastream coming from smartmeter
-#include <SML.h>
+#include "SML.h"
 sml mysml;
 
 // -- routines to read serial datastream via photoled from smartmeter
@@ -83,7 +85,17 @@ void setup() {
   // -- settings for the radio-Module
   if(use_WLAN) 
   {
-    //digitalWrite(ledPin, HIGH);
+    // Testmode for all LEDs
+    int i;
+    for(i=0;i<5;i++){
+      digitalWrite(ledPin, HIGH);
+      delay(200);
+      digitalWrite(ledPin, LOW);
+      delay(200);
+    }
+    digitalWrite(ledPin, HIGH);
+
+    
     Serial.println(F("Initiating RF24-network ..."));
     printf_begin();
     
@@ -101,13 +113,15 @@ void setup() {
       //radio.setCRCLength(RF24_CRC_8);
       //radio.setRetries(5,15);
       radio.printDetails();     // Dump the configuration of the rf unit for debugging
+      digitalWrite(ledPin, LOW);
+      
       Serial.println(F("Mesh successfully initiated ..."));
       
       if (mesh.checkConnection()) {
-        //digitalWrite(ledPin, LOW);
+        digitalWrite(ledPin, LOW);
         Serial.println(F("Connection established ..."));
       } else {
-        Serial.println(F("noe connection established so far ..."));
+        Serial.println(F("no connection established so far ..."));
       };
     } else {
       Serial.println(F("Somehow that did not work, renewing network-address ..."));
@@ -127,6 +141,7 @@ void loop()
 {
   current_millis_value = millis(); 
   diff_millis_value += current_millis_value - previous_millis_value; // should work even when millis rolls over 
+  seconds_before = seconds;
   seconds += diff_millis_value / 1000; 
   diff_millis_value = diff_millis_value % 1000; 
   minutes += seconds / 60; 
@@ -151,7 +166,10 @@ void loop()
   // -- enter "receiving" state if something is waiting to be read()  
   // -- if there is data received from the photodiode, the data will be read
   // -- and passed by the sml-method parse()
-  if (mySerial.available() > 0) {            
+  if (mySerial.available() > 0) { 
+    digitalWrite(ledPin, LOW);           
+    seconds_miss = 0;
+    
     // -- read first char
     mysml.rawdata[bufCnt++] = (uint8_t) mySerial.read();    
     
@@ -218,10 +236,12 @@ void loop()
         if (!mesh.write(&payload, 'E', sizeof(payload))) {
           // -- if a write fails, check connectivity to the mesh network
           if ( ! mesh.checkConnection() ) {
+            digitalWrite(ledPin, HIGH);
             // refresh the network address
             Serial.print(F(" - Renewing Address ... "));            
             if (mesh.renewAddress()!=0) {
               radio.printDetails();   
+              digitalWrite(ledPin, LOW);
             } else {
               Serial.println(F(" habe keine Addresse erhalten."));
             };            
@@ -245,5 +265,12 @@ void loop()
     } 
     // -- reset counter for next transmission
     bufCnt = 0;  
+  }
+  else{
+    // hier LED anmachen, wenn nach bestimmter Zeitspanne kein Signal kommt...
+    if(seconds_before!=seconds) seconds_miss += 1;
+    Serial.println(seconds_miss);
+    if(seconds_miss>8) digitalWrite(ledPin,HIGH);
+    
   }
 }

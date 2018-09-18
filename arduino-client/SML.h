@@ -4,6 +4,7 @@
 #include "string.h"
 
 #define IGNORE_OCTETS 0
+
 /*
     Functions for working with SML-Messages
 */
@@ -61,15 +62,15 @@ void printHexChar(char* input, uint8_t length) {
 void str_midlower(char* input, char start, char length, char* output) {
 
   uint8_t inputlen = strlen(input);
-  //Serial.print("\nLÃ¤nge Input %d\n",inputlen);
+  //Serial.print("\nLänge Input %d\n",inputlen);
   if (inputlen == 0) return;
   if (start < 0) return;
   if (start > inputlen) return;
 
   //Serial.print("\nStart Input %d:%c\n",start-1,input[start-1]);
-  //Serial.print("1. LÃ¤nge %d\n",length);
+  //Serial.print("1. Länge %d\n",length);
   if (start - 1 + length > inputlen) length = inputlen - start;
-  //Serial.print("2. LÃ¤nge %d\n",length);
+  //Serial.print("2. Länge %d\n",length);
   uint8_t a = 0;
   for (a = 0; a < length; a++) {
     output[a] = tolower(input[start - 1 + a]);
@@ -112,6 +113,14 @@ void  streamChar(uint8_t *streamdata,uint32_t &position, char* data, uint8_t byt
 }
 
 
+struct sml_dataset_t {
+		uint32_t actSensorTime;
+		uint32_t valTotal;
+		uint32_t valTarif1;
+		uint32_t valTarif2;
+		uint32_t valCurrent;
+};
+
 class sml_ListEntry
 {
   public:
@@ -135,7 +144,7 @@ class sml_ListEntry
       uint8_t kanal   =  objName+1;       // 0..64
       uint8_t messgroesse = objName+2;   // 1.. Summe Wirkleistung+, 3.. Summe Blindleistung
       uint8_t messart = objName+3  ;   // 6.. Maximum, 8.. Zeitintegral1, 9..Zeitintegral2, 29.. Zeitintegral5
-      uint8_t tarifstufe = objName+4 ; // 0.. Total, 1..9 Tagrif 1-0
+      uint8_t tarifstufe = objName+4 ; // 0.. Total, 1..9 Tarif 1-0
       uint8_t vorwert = objName+5  ; 
 */
       //return str(medium) + chr(0x2D) + str(kanal) + chr(0x3A) + str(messgroesse) + chr(0x2E) + str(messart) + chr(0x2E) + str(tarifstufe) + chr(0x2A) + str(vorwert)
@@ -184,7 +193,10 @@ class sml
     static const uint8_t  Unsigned32  = 0x65;
     static const uint8_t  Unsigned64  = 0x69;
     static const uint8_t  Octet       = 3;
-    static const uint32_t   E3B_init_timestamp = 1441368080;
+	// Timestamp, der die Inbetriebnahme des Stromzählers markiert
+	// hier: 04.09.2015 22:19:10 Uhr - 1441397950
+    //static const uint32_t E3B_init_timestamp = 1441368080
+	static const uint32_t E3B_init_timestamp =  0; //1441397950;  
 
 
   private:
@@ -396,7 +408,7 @@ class sml
           uint8_t byte1 = this->rawdata[this->message_pointer + i];
           data64 = (data64 << 8) + byte1;
         }
-		Serial.println("");
+		//Serial.println("");
 		data = (uint32_t) (data64 / 1000);
         this->message_pointer += counter;
         return data;
@@ -419,7 +431,7 @@ class sml
       else if (datatype < 0x50)
       {
         uint8_t octet_len = datatype - 1;
-        //Serial.print("ich soll einen String zurÃ¼chgeben mit zeichen: ");
+        //Serial.print("ich soll einen String zurüchgeben mit zeichen: ");
         //Serial.println(octet_len);
         if (octet_len > 4) {
           Serial.println("Mehr als 4 Bytes sind als Rueckgabe fuer Octet leider nicht moeglich.");
@@ -589,8 +601,10 @@ class sml
 	  }
 
       else {
+		#ifdef _debugmode
         Serial.print("unknown message type:");
         Serial.println(messagetype, HEX);
+		#endif
         return;
       }
 
@@ -603,14 +617,14 @@ class sml
       return;
     }
 
-    void parseMessage(sml_message &msg)
+    uint8_t parseMessage(sml_message &msg)
     {
 	  // -- TL-Feld
       uint8_t TL = this->getTL();
       if (TL < 0x60 or TL > 0x7F) {
         Serial.print("ungueltige Typlaenge ermittelt: ");
         Serial.println(TL, HEX);
-        return;
+        return 11;
       }
 
       // SML_Message parsen
@@ -630,7 +644,7 @@ class sml
       uint8_t abortOnError = this->getData();
 
 	  this->parseMessageBody(msg);
-      return;
+      return 0;
 	  }
 
 
@@ -642,7 +656,7 @@ class sml
     uint8_t rawlength;
 
     /*
-       Diese Routine wird nun benÃ¶tigt, wenn die Eingangsdaten als HexStrom vorliegen und erst in Byte-Daten umgewandelt werden sollen
+       Diese Routine wird nun benötigt, wenn die Eingangsdaten als HexStrom vorliegen und erst in Byte-Daten umgewandelt werden sollen
     */
     bool initdata(const char* input)
     {
@@ -653,13 +667,26 @@ class sml
 
     }
 
-    bool parse(uint8_t *streamdata)
+	
+	/* Returncodes fuer Parse()
+		1 .. Nachricht zu kurz
+		2 .. ungültige Nachricht, ESC nicht gefunden
+		3 .. ungültige Nachricht, Header falsch 1B1B1B1B
+		4 .. unbekannter Nachrichtentyp
+		11.. Problem beim Messageparsen
+		
+	*/
+    uint8_t parse(sml_dataset_t *sml_dataset)
     {
       
-	  if (this->rawlength<200) 
-	  {
-		Serial.println("Nachricht zu kurz, wird nicht verwendet.");
-		return 0;
+	  if (this->rawlength < 200) 
+	  {	
+		#ifdef _debugmode
+		Serial.print(F("Nachricht zu kurz, wird nicht verwendet: "));
+		Serial.print(this->rawlength,DEC);
+		Serial.println(F("bytes"));
+		#endif
+		return 1;
 	  }
 		//Serial.println("Parse Nachricht."); 
 	  // --
@@ -671,9 +698,11 @@ class sml
 
       position = this->checkseq(this->seq_escape);
       if (position == 0) {
-        Serial.print("keine gueltige Nachricht:\n");
+		#ifdef _debugmode
+        Serial.print(F("keine gueltige Nachricht:\n"));
         printHex(this->rawdata, this->rawlength);
-        return 0;
+		#endif
+        return 2;
       } else {
         //Serial.println("Escape gefunden.");
       }
@@ -682,9 +711,11 @@ class sml
       // -- Nach Beginn der Nachricht '01 01 01 01' suchen
       position = this->checkseq(this->seq_begin);
       if (position == 0) {
-        Serial.print("Nachrichtenbeginn nicht gefunden:\n");
+		#ifdef _debugmode
+        Serial.print(F("Nachrichtenbeginn nicht gefunden:\n"));
         //Serial.println(this->rawdata);
-        return 0;
+		#endif
+        return 3;
       } else {
         //Serial.print("Beginn gefunden.");
       }
@@ -693,11 +724,15 @@ class sml
          -- Begin parsing SML_Message
          -------------------------------------------------------------
       */
+	  uint8_t result =0;
+	  
       while (this->end_of_msg != 1) {
 		//Serial.println("parseMessage:");
         sml_message msg;
 	
-		this->parseMessage(msg);
+		result = this->parseMessage(msg);
+		if(result!=0) {return result;}
+		
 		if (msg.msgtype == this->OpenResponse)
 		{
           //Serial.println("OpenResponse processed\n");			
@@ -711,55 +746,87 @@ class sml
         {
 		  //Serial.println("GetListResponse processed\n");
 		  uint8_t i,j;
-		  uint32_t stream_pointer = 0;
 		  
-		  streamBytes(streamdata,stream_pointer,msg.actSensorTime,4);
+		  sml_dataset->actSensorTime = msg.actSensorTime;
 					  
 		  // Print Information of received data...
-		  Serial.print("SensorTime: ");
-		  Serial.println(msg.actSensorTime);
+		  //Serial.print(F("SensorTime: "));
+		  //Serial.println(msg.actSensorTime);
+
 	      for(j=0;j < msg.NumEntries;j++)
 		  {
-			  for (i = 0; i < 6; i++) 
-			  {
-				Serial.print((uint8_t) msg.Entries[j].objName[i]);
-				Serial.print(":");
+			// Arrayindex    0       1 			2 			3 			4 				6
+			// Kennzahl   Medium - Kanal : Messgroesse . Messart . Tarifstufe * Vorwertzaehlerstand
+			// OBIS			 A       B          C           D           E               F
+			// Stellen      (1)    (1-2)     (1-2)        (1-2)       (1)            (1-2)
+			
+			// 129-129:199.130.03*255	Herstelleridentifikation 
+			// 1-0:1.8.0*255 			Wirkenergie Total Bezug
+			// 1-0:1.8.1*255 			Wirkenergie Tarif 1 Bezug
+			// 1-0:1.8.2*255 			Wirkenergie Tarif 2 Bezug
+			
+			/*
+				  uint8_t medium  =  objName;         // 1.. Elektrizitaet      
+				  uint8_t kanal   =  objName+1;       // 0..64
+				  uint8_t messgroesse = objName+2;   // 1.. Summe Wirkleistung+, 3.. Summe Blindleistung
+				  uint8_t messart = objName+3  ;   // 6.. Maximum, 8.. Zeitintegral1, 9..Zeitintegral2, 29.. Zeitintegral5
+				  uint8_t tarifstufe = objName+4 ; // 0.. Total, 1..9 Tarif 1-0
+				  uint8_t vorwert = objName+5  ; 
+			*/
+			/* Analyse der Messart */
+			switch ( (uint8_t)msg.Entries[j].objName[3]) {
+				case 7: /* Momentanleistung */
+					sml_dataset->valCurrent = msg.Entries[j].value;
+					//Serial.print(msg.Entries[j].value);
+					//Serial.print(F(" Watt momentan, "));
+					break;				  
+					
+				case 8:
+					switch ( (uint8_t)msg.Entries[j].objName[4]) {
+						case 0: /* total */
+							sml_dataset->valTotal = msg.Entries[j].value;
+							//Serial.print(msg.Entries[j].value);
+							//Serial.print(F(" Watt total, "));
+							break;
+						case 1: /* Tarif 1*/
+							sml_dataset->valTarif1 = msg.Entries[j].value;
+							//Serial.print(msg.Entries[j].value);
+							//Serial.print(F(" Wh-HT, "));
+							break;
+						case 2: /* Tarif 2*/
+							sml_dataset->valTarif2 = msg.Entries[j].value;
+							//Serial.print(msg.Entries[j].value);
+							//Serial.print(F(" Wh-NT, "));
+							break;
+						default:
+							break;
+					}
+					break;				
 			  }
-			  Serial.print(", Status: ");
-			  Serial.print(msg.Entries[j].status);
-			  Serial.print(", valTime: ");
-			  Serial.print(msg.Entries[j].valTime);
-			  Serial.print(", unit: ");
-			  Serial.print(msg.Entries[j].unit);
-			  Serial.print(", value: ");
-			  Serial.println(msg.Entries[j].value);
-
-			  streamChar(streamdata,stream_pointer,msg.Entries[j].objName,6);
-			  streamBytes(streamdata,stream_pointer,msg.Entries[j].status,4);
-			  streamBytes(streamdata,stream_pointer,msg.Entries[j].valTime,4);
-			  streamBytes(streamdata,stream_pointer,msg.Entries[j].unit,4);
-			  streamBytes(streamdata,stream_pointer,msg.Entries[j].value,4);
-			  		  
+			  //Serial.println("");		  
+			 
 			  if (msg.Entries[j].objLength > 0) {
 				delete msg.Entries[j].objName;
 				msg.Entries[j].objLength = 0;
 			  }			  
 		  }
-		  Serial.print(", codierte bytes: ");
-		  Serial.println(stream_pointer);
         }
         else
         {
-          Serial.print("unknown message <");
-		  Serial.print(msg.msgtype);
-		  Serial.println(">, aborting...\n");
+		  #ifdef _debugmode
+			Serial.print("unknown message <");
+			Serial.print(msg.msgtype);
+			Serial.println(">, aborting...\n");
+		  #endif
           this->end_of_msg = 1;
+		  return 4;
 		  
         }
         // exit in development
         //this->end_of_msg = 1;
 		//delete msg;
       }
+	  return 0;
     }
 };
 
