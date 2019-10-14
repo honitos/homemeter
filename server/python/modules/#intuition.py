@@ -5,7 +5,6 @@ class intuition:
     colorset = 0
     curses = None
     screen = None
-    window = None
     width = None
     height = None
     ystatus = 0
@@ -13,6 +12,7 @@ class intuition:
     def __init__(self):
         self.curses = curses
         self.screen = curses.initscr()
+
         self.width = self.screen.getmaxyx()[1] - 1
         self.height = self.screen.getmaxyx()[0] - 1
 
@@ -40,12 +40,12 @@ class intuition:
         self.curses.nocbreak()
         self.curses.endwin()
 
-    def draw_screen(self):
+    def draw_window(self):
         if self.curses.has_colors():
             self.screen.bkgd(self.curses.color_pair(self.colorset))
 
         self.screen.box()
-        self.screen.addstr(1,2,"homeServer V0.1 - 2019 - honitos")
+        self.screen.addstr(1,2,"homeServer V0.1 - 2018 - honitos")
         # Trennlinie Titelzeile
         self.screen.hline(2,1,curses.ACS_HLINE,self.width - 1)
         self.screen.addch(2,0,curses.ACS_LTEE)
@@ -69,62 +69,45 @@ class intuition:
     def write_status(self,status="-"):
         try:
             self.screen.addstr(self.ystatus,1,status,self.curses.A_BOLD)
-            self.screen.addnstr(" " * self.width,self.width - 3 - len(status))
-            #elf.screen.refresh()
+            self.screen.addnstr(" " * self.width,self.width-3-len(status))
+            self.screen.refresh()
         except:
             raise
 
-    def write_error(self,error=""):
-        try:
-            self.screen.addstr(self.ystatus,60,error,self.curses.A_BOLD)
-            self.screen.addnstr(" " * self.width,self.width - 60 - len(error))
-        except:
-            raise
-            
-    def update_screen(self):
+    def update_window(self):
         self.height, self.width = self.screen.getmaxyx()
         self.height -= 1
         self.width -= 1
         self.screen.clear()
-        self.draw_screen()
+        self.draw_window()
 
 if __name__ == "__main__":
     screen = intuition()
-    screen.draw_screen()
-
-    try:
-        while 1:
-            a = screen.screen.getch()
-            
-            if a == ord('q'):
-                break
-            elif a == screen.curses.KEY_RESIZE:
-                screen.update_screen()    
-
-            elif a != 1:
-                screen.write_status("keypressed, value = " + str(a))
-                screen.colorset += 1
-                if screen.colorset > 6: screen.colorset = 0
-                screen.write_status("colorset is = %s" % screen.colorset)
-
-                screen.update_screen()
-                #screen.draw_window()
-                screen.write_status("colorset is = %s" % screen.colorset)
-
-            ywert = 50
-            chartw = screen.width - 2
-            charth = screen.height - 5
-            chartx = 1
-            charty = 10
-            for c in range(10): #chartw):
-                #vline(y, x, ch, n)
-                cy = c
-                screen.screen.vline(cy, chartx + c, curses.ACS_CKBOARD, charth-cy)
-    except:
-        raise
-    finally:
-        screen.close()
-        print("End.")
+    screen.draw_window()
+    while 1:
+        a = screen.screen.getch()
         
-    print("Cleaning up.")
+        if a == ord('q'):
+            break
+        elif a == screen.curses.KEY_RESIZE:
+            screen.update_window()    
+
+        elif a != 1:
+            screen.write_status("keypressed, value = " + str(a))
+            screen.colorset += 1
+            if screen.colorset > 6: screen.colorset = 0
+            screen.write_status("colorset is = %s" % screen.colorset)
+
+            screen.update_window()
+            #screen.draw_window()
+            screen.write_status("colorset is = %s" % screen.colorset)
+
+        ywert = 50
+        chartw = screen.width - 2
+        charth = screen.height - 10
+        chartx = 4
+        charty = 10
+        for c in range(chartw):
+            #vline(y, x, chscreen.screen.vline(charty, chartx + c, curses.ACS_VLINE, 20)		
+
     screen.close()
